@@ -9,6 +9,7 @@ import { reportFetch } from "@/report";
 export class Tracker {
   private config: TrackerConfig;
   private visitorId: string | null = null;
+  private initPromise: Promise<void> | null = null;
   constructor(config: TrackerConfig) {
     this.config = config;
     this.init(); // 初始化方法
@@ -16,12 +17,17 @@ export class Tracker {
 
   // protected 允许子类和内部使用
   protected async init() {
-    let config = this.config;
-    this.visitorId = await getFingerprint(config);
-    reportEvent(this.visitorId, config);
-    reportError(this.visitorId, config);
-    reportPv(this.visitorId, config);
-    reportPerformance(this.visitorId, config);
+    if (this.initPromise) return this.initPromise;
+    this.initPromise = (async () => {
+      let config = this.config;
+      this.visitorId = await getFingerprint(config);
+      reportEvent(this.visitorId, config);
+      reportError(this.visitorId, config);
+      reportPv(this.visitorId, config);
+      reportPerformance(this.visitorId, config);
+    })();
+
+    return this.initPromise;
   }
 
   public async setUserId(userId: string) {
@@ -33,23 +39,3 @@ export class Tracker {
     });
   }
 }
-
-const tracker = new Tracker({
-  baseUrl: "/api/v1",
-  uv: {
-    api: "/tracker/uv",
-    updateApi: "/tracker/update-uv",
-  },
-  pv: {
-    api: "/tracker/pv",
-  },
-  event: {
-    api: "/tracker/event",
-  },
-  error: {
-    api: "/tracker/error",
-  },
-  performance: {
-    api: "/tracker/performance",
-  },
-});
