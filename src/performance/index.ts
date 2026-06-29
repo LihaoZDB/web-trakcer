@@ -1,12 +1,17 @@
-import type { PerformanceDto } from "@en/common/tracker";
+import { report } from "@/report";
+import type { PerformanceDto, TrackerConfig } from "@en/common/tracker";
 import { onINP, onCLS } from "web-vitals";
 
-export const reportPerformance = async (visitorId: string) => {
+export const reportPerformance = async (
+  visitorId: string,
+  config: TrackerConfig,
+) => {
   let fp = 0; // 首次绘制时间
   let fcp = 0; // 首次内容绘制时间
   let lcp = 0; // 最大内容绘制时间
   let inp = 0; // 交互性能指标
   let cls = 0; // 累积布局偏移
+  let url = config.baseUrl + config.performance.api;
   let performanceEntries = performance.getEntriesByType("paint");
   const fnEntry = performanceEntries.find(
     (entry) => entry.name === "first-paint",
@@ -63,6 +68,7 @@ export const reportPerformance = async (visitorId: string) => {
           inp,
           cls,
         };
+        report(url, body);
       }
     },
     { once: true },

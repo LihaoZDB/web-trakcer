@@ -1,9 +1,10 @@
-import type { ErrorDto } from "@en/common/tracker";
+import { report } from "@/report";
+import type { ErrorDto, TrackerConfig } from "@en/common/tracker";
 
-export const reportError = (visitorId: string) => {
+export const reportError = (visitorId: string, config: TrackerConfig) => {
+  let url = config.baseUrl + config.error.api;
   // 捕获全局JS错误
   window.addEventListener("error", (e: ErrorEvent) => {
-    console.log(e);
     const body: ErrorDto = {
       visitorId,
       error: "js",
@@ -11,7 +12,7 @@ export const reportError = (visitorId: string) => {
       stack: e.error.stack,
       url: e.filename,
     };
-    console.log(body);
+    report(url, body);
   });
   // 捕获全局Promise错误
   window.addEventListener("unhandledrejection", (e: PromiseRejectionEvent) => {
@@ -23,6 +24,6 @@ export const reportError = (visitorId: string) => {
       stack: isError ? e.reason.stack : "Promise Rejection",
       url: window.location.href,
     };
-    console.log(body);
+    report(url, body);
   });
 };

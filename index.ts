@@ -4,40 +4,52 @@ import { reportEvent } from "@/event";
 import { reportError } from "@/error";
 import { reportPv } from "@/pv";
 import { reportPerformance } from "@/performance";
+import { reportFetch } from "@/report";
 
 export class Tracker {
-  constructor(private config: TrackerConfig) {
-    this.init(config); // 初始化方法
+  private config: TrackerConfig;
+  private visitorId: string | null = null;
+  constructor(config: TrackerConfig) {
+    this.config = config;
+    this.init(); // 初始化方法
   }
 
   // protected 允许子类和内部使用
-  protected async init(config: TrackerConfig) {
-    await getFingerprint();
-    reportEvent("asasdasd");
-    reportError("asasdasd");
-    reportPv("asasdasd");
-    reportPerformance("asasdasd");
+  protected async init() {
+    let config = this.config;
+    this.visitorId = await getFingerprint(config);
+    reportEvent(this.visitorId, config);
+    reportError(this.visitorId, config);
+    reportPv(this.visitorId, config);
+    reportPerformance(this.visitorId, config);
   }
 
-  public setUserId(userId: string) {}
+  public async setUserId(userId: string) {
+    await this.init();
+    let url = this.config.baseUrl + this.config.uv.updateApi;
+    await reportFetch(url, {
+      visitorId: this.visitorId,
+      userId: userId,
+    });
+  }
 }
 
 const tracker = new Tracker({
-  baseUrl: "http://localhost:3000",
+  baseUrl: "/api/v1",
   uv: {
-    api: "/api/uv",
-    updateApi: "/api/uv/update",
+    api: "/tracker/uv",
+    updateApi: "/tracker/update-uv",
   },
   pv: {
-    api: "/api/pv",
+    api: "/tracker/pv",
   },
   event: {
-    api: "/api/event",
+    api: "/tracker/event",
   },
   error: {
-    api: "/api/error",
+    api: "/tracker/error",
   },
   performance: {
-    api: "/api/performance",
+    api: "/tracker/performance",
   },
 });

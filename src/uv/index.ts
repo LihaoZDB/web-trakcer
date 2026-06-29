@@ -1,4 +1,5 @@
-import type { UvDto } from "@en/common/tracker";
+import { reportFetch } from "@/report";
+import type { TrackerConfig, UvDto } from "@en/common/tracker";
 import FingerprintJS from "@fingerprintjs/fingerprintjs";
 import { UAParser } from "ua-parser-js";
 
@@ -11,8 +12,9 @@ export const getBrowserInfo = () => {
   };
 };
 
-export const getFingerprint = async () => {
+export const getFingerprint = async (config: TrackerConfig) => {
   const browserInfo = getBrowserInfo();
+  // 获取设备指纹信息
   const fp = await FingerprintJS.load();
   const result = await fp.get();
   const body: UvDto = {
@@ -21,5 +23,8 @@ export const getFingerprint = async () => {
     os: browserInfo.os,
     device: browserInfo.device,
   };
-  console.log(body);
+
+  let url = config.baseUrl + config.uv.api;
+  const res = await reportFetch(url, body);
+  return res.data;
 };
